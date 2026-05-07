@@ -28,7 +28,7 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     leftSegments: ["path", "git", "model", "thinking", "shell_mode", "context_pct", "cache_read", "cost"],
     rightSegments: [],
     secondarySegments: ["extension_statuses"],
-    separator: "powerline-thin",
+    separator: "pipe",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },

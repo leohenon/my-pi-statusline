@@ -942,9 +942,11 @@ function computeResponsiveLayout(
     if (!overflow && currentWidth + neededWidth <= leftAvailableWidth) {
       topLeftSegments.push(seg.content);
       currentWidth += neededWidth;
-    } else if (seg.id !== "session") {
+    } else {
       overflow = true;
-      overflowSegments.push(seg);
+      if (seg.id !== "session") {
+        overflowSegments.push(seg);
+      }
     }
   }
 

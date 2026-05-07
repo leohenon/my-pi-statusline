@@ -316,9 +316,14 @@ const sessionSegment: StatusLineSegment = {
     const icons = getIcons();
     const sessionId = ctx.sessionId;
     const rawDisplay = ctx.sessionName?.trim() || ctx.lastUserPrompt?.replace(/\s+/g, " ").trim() || sessionId?.slice(0, 8) || "new";
-    const display = truncateToWidth(rawDisplay, 72, "…");
+    const maxWidth = 72;
+    const display = visibleWidth(rawDisplay) > maxWidth
+      ? `${truncateToWidth(rawDisplay, maxWidth - 1, "")}${applyColor(ctx.theme, "muted", "…")}`
+      : rawDisplay;
+    const stashStatus = normalizeExtensionStatusValue(ctx.extensionStatuses.get("stash") ?? "");
+    const stashSuffix = stashStatus ? ` | ${color(ctx, "thinkingMedium", stashStatus)}` : "";
 
-    return { content: color(ctx, "session", withIcon(icons.session, display)), visible: true };
+    return { content: `${color(ctx, "session", withIcon(icons.session, display))}${stashSuffix}`, visible: true };
   },
 };
 

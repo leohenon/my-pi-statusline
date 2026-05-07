@@ -27,7 +27,7 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
     // Model/context/cache/cost are right-aligned like a status bar.
     leftSegments: ["git", "path", "session", "shell_mode"],
     rightSegments: ["model", "thinking", "context_pct", "cache_read", "cost"],
-    secondarySegments: ["extension_statuses"],
+    secondarySegments: [],
     separator: "pipe",
     colors: DEFAULT_COLORS,
     segmentOptions: {

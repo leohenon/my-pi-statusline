@@ -1,10 +1,10 @@
 {
   "colors": {
-    "model": "#FFCFA8",
+    "model": "#82AAFF",
     "shellMode": "#99FFE4",
-    "path": "#82Aaff",
-    "gitDirty": "#FFD580",
-    "gitClean": "#A8FFB0",
+    "path": "#99FFE4",
+    "gitDirty": "#B8A0FF",
+    "gitClean": "#B8A0FF",
     "thinking": "#A0A0A0",
     "thinkingMinimal": "#B8A0FF",
     "thinkingLow": "#99FFE4",

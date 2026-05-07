@@ -29,9 +29,9 @@ function hexToRgb(hex: string): [number, number, number] {
 // Vesper-inspired, but varied per area so the bar has more color separation.
 const THEME = {
   sep: "#5A5A5A",         // Muted separator gray
-  model: "#FFCFA8",       // Warm amber
-  path: "#82AAFF",        // Soft blue
-  gitClean: "#A8FFB0",    // Soft green
+  model: "#82AAFF",       // Soft blue
+  path: "#99FFE4",        // Vesper peppermint
+  gitClean: "#B8A0FF",    // Soft purple
   accent: "#99FFE4",      // Mint accent
 };
 

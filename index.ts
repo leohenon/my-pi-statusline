@@ -1247,6 +1247,10 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     bashModeActive = false;
     bashTranscript = new BashTranscriptStore(bashModeSettings);
     bashCompletionEngine = new BashCompletionEngine();
+    invalidateGitStatus();
+    invalidateGitBranch();
+    setTimeout(() => requestImmediateStatusRender({ deferDuringTyping: false }), 100);
+    setTimeout(() => requestImmediateStatusRender({ deferDuringTyping: false }), 300);
 
     getThinkingLevelFn = typeof ctx.getThinkingLevel === "function"
       ? () => ctx.getThinkingLevel()
@@ -2311,53 +2315,14 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     fixedEditorCompositor?.jumpToRootBottom();
   }
 
-  function installPowerlineWidgets(ctx: any) {
-    ctx.ui.setWidget("powerline-status", () => ({
-      dispose() {},
-      invalidate() {
-        requestStatusRender();
-      },
-      render(width: number): string[] {
-        return renderPowerlineStatusLines(width);
-      },
-    }), { placement: "belowEditor" });
-
-    ctx.ui.setWidget("powerline-top", (_tui: any, theme: Theme) => ({
-      dispose() {},
-      invalidate() {
-        resetLayoutCache();
-      },
-      render(width: number): string[] {
-        return renderPowerlineTopLines(width, theme);
-      },
-    }), { placement: "belowEditor" });
-
-    ctx.ui.setWidget("powerline-secondary", (_tui: any, theme: Theme) => ({
-      dispose() {},
-      invalidate() {
-        resetLayoutCache();
-      },
-      render(width: number): string[] {
-        return renderPowerlineSecondaryLines(width, theme);
-      },
-    }), { placement: "belowEditor" });
-
-    ctx.ui.setWidget("powerline-bash-transcript", (_tui: any, theme: Theme) => ({
-      dispose() {},
-      invalidate() {},
-      render(width: number): string[] {
-        return renderBashTranscriptLines(width, theme);
-      },
-    }), { placement: "belowEditor" });
-
-    ctx.ui.setWidget("powerline-last-prompt", () => ({
-      dispose() {},
-      invalidate() {},
-      render(width: number): string[] {
-        return renderLastPromptLines(width);
-      },
-    }), { placement: "belowEditor" });
+  function clearPowerlineWidgets(ctx: any) {
+    ctx.ui.setWidget("powerline-status", undefined);
+    ctx.ui.setWidget("powerline-top", undefined);
+    ctx.ui.setWidget("powerline-secondary", undefined);
+    ctx.ui.setWidget("powerline-bash-transcript", undefined);
+    ctx.ui.setWidget("powerline-last-prompt", undefined);
   }
+
 
   function setupCustomEditor(ctx: any) {
     snapshotPromptHistory(currentEditor);
@@ -2391,11 +2356,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       : null;
 
     teardownFixedEditorCompositor();
-    ctx.ui.setWidget("powerline-top", undefined);
-    ctx.ui.setWidget("powerline-secondary", undefined);
-    ctx.ui.setWidget("powerline-bash-transcript", undefined);
-    ctx.ui.setWidget("powerline-status", undefined);
-    ctx.ui.setWidget("powerline-last-prompt", undefined);
+    clearPowerlineWidgets(ctx);
 
     let autocompleteFixed = false;
 
@@ -2567,15 +2528,21 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       return editor;
     };
 
-    ctx.ui.setEditorComponent(editorFactory);
+    if (config.fixedEditor) {
+      ctx.ui.setEditorComponent(editorFactory);
+    } else {
+      ctx.ui.setEditorComponent(undefined);
+    }
+    clearPowerlineWidgets(ctx);
 
     ctx.ui.setFooter((tui: any, _theme: Theme, footerData: ReadonlyFooterDataProvider) => {
       footerDataRef = footerData;
       tuiRef = tui;
+      tui?.setClearOnShrink?.(true);
       installFooterStatusRepaintHook(footerData);
       const unsub = footerData.onBranchChange(() => requestStatusRender());
 
-      return {
+      const footerComponent = {
         dispose() {
           unsub();
           restoreFooterStatusRepaintHook?.();
@@ -2584,18 +2551,42 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         invalidate() {
           requestStatusRender();
         },
-        render(): string[] {
-          return [];
+        render(width: number): string[] {
+          if (config.fixedEditor) return [];
+          const footerLines = [
+            ...renderPowerlineTopLines(width, _theme),
+            ...renderPowerlineSecondaryLines(width, _theme),
+            ...renderBashTranscriptLines(width, _theme),
+            ...renderLastPromptLines(width),
+            ...renderPowerlineStatusLines(width),
+          ];
+
+          const rows = Math.max(1, tui?.terminal?.rows ?? process.stdout.rows ?? 0);
+          const siblings = Array.isArray(tui?.children) ? tui.children : [];
+          const selfIndex = siblings.indexOf(footerComponent);
+          const preceding = selfIndex >= 0 ? siblings.slice(0, selfIndex) : [];
+          let precedingRows = 0;
+          for (const child of preceding) {
+            if (!child || child === footerComponent || typeof child.render !== "function") continue;
+            try {
+              precedingRows += child.render(width).length;
+            } catch {
+              // If a component cannot be safely rendered during measurement, ignore it.
+            }
+          }
+
+          const padRows = Math.max(0, rows - precedingRows - footerLines.length);
+          return [...Array.from({ length: padRows }, () => ""), ...footerLines];
         },
       };
+
+      return footerComponent;
     });
 
     if (config.fixedEditor) {
       if (tuiRef) {
         installFixedEditorCompositor(ctx, tuiRef);
       }
-    } else {
-      installPowerlineWidgets(ctx);
     }
   }
 

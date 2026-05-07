@@ -2333,7 +2333,8 @@ export default function powerlineFooter(pi: ExtensionAPI) {
         return renderFixedEditorCluster({
           width,
           terminalRows,
-          statusLines: [...aboveWidgetLines, ...renderPowerlineStatusLines(width), ...statusContainerLines],
+          preEditorLines: statusContainerLines,
+          statusLines: [...aboveWidgetLines, ...renderPowerlineStatusLines(width)],
           topLines: renderPowerlineTopLines(width, theme),
           editorLines: fixedEditorContainer ? compositor.renderHidden(fixedEditorContainer, width) : [],
           secondaryLines: [...renderPowerlineSecondaryLines(width, theme), ...belowWidgetLines],

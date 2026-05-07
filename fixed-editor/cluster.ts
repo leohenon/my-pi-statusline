@@ -5,6 +5,8 @@ export const CURSOR_MARKER = "\x1b_pi:c\x07";
 export interface FixedEditorClusterInput {
   width: number;
   terminalRows: number;
+  /** Lines that should stay immediately above the prompt/editor (e.g. Pi's working indicator). */
+  preEditorLines?: string[];
   statusLines?: string[];
   topLines?: string[];
   editorLines: string[];
@@ -78,6 +80,7 @@ export function renderFixedEditorCluster(input: FixedEditorClusterInput): FixedE
   const width = Math.max(1, input.width);
   const maxRows = Math.max(1, input.terminalRows - 1);
 
+  const preEditorLines = normalizeLines(input.preEditorLines, width);
   const statusLines = normalizeLines(input.statusLines, width);
   const topLines = normalizeLines(input.topLines, width);
   const editorSource = normalizeLines(input.editorLines, width);
@@ -85,11 +88,14 @@ export function renderFixedEditorCluster(input: FixedEditorClusterInput): FixedE
   const transcriptLines = normalizeLines(input.transcriptLines, width);
   const lastPromptLines = normalizeLines(input.lastPromptLines, width);
 
-  const editorLines = capEditorLines(editorSource, maxRows);
-  let remaining = maxRows - editorLines.length;
+  const preEditor = takeTail(preEditorLines, maxRows);
+  let remaining = maxRows - preEditor.length;
 
-  // Keep the prompt/editor visually first in the fixed cluster, then render the
-  // powerline/status rows below it. Widget placement alone is not enough in
+  const editorLines = capEditorLines(editorSource, remaining);
+  remaining -= editorLines.length;
+
+  // Keep Pi's working/status line above the prompt, while rendering the
+  // powerline/status-bar rows below it. Widget placement alone is not enough in
   // fixed-editor mode because this compositor decides final row ordering.
   const status = takeTail(statusLines, remaining);
   remaining -= status.length;
@@ -106,6 +112,7 @@ export function renderFixedEditorCluster(input: FixedEditorClusterInput): FixedE
   const transcript = takeTail(transcriptLines, remaining);
 
   return extractCursor([
+    ...preEditor,
     ...editorLines,
     ...status,
     ...top,

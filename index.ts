@@ -868,7 +868,13 @@ function buildContentFromParts(
   const separatorDef = getSeparator(presetDef.separator);
   const sepAnsi = getFgAnsiCode("sep");
   const sep = separatorDef.left;
-  return " " + parts.join(` ${sepAnsi}${sep}${ansi.reset} `) + ansi.reset + " ";
+
+  // Subtle Vesper status-bar background. Segment renderers use ANSI resets for
+  // their foreground colors, so re-apply the background after each reset.
+  const bg = ansi.getBgAnsi(29, 29, 29); // #1D1D1D
+  const keepBg = (text: string) => text.replaceAll(ansi.reset, `${ansi.reset}${bg}`);
+  const joined = parts.map(keepBg).join(` ${sepAnsi}${sep}${ansi.reset}${bg} `);
+  return `${bg} ${joined} ${ansi.reset}`;
 }
 
 /**

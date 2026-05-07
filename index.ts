@@ -2111,37 +2111,48 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     return lines.slice(-16);
   }
 
-  function getInlineVimStatus(): string | null {
+  function getInlineVimStatus(): { mode: string | null; pending: string | null } {
     const statuses = footerDataRef?.getExtensionStatuses();
-    if (!statuses) return null;
+    if (!statuses) return { mode: null, pending: null };
 
-    const mode = statuses.get("vim-mode")?.replace(/\s+/g, " ").trim();
-    const pending = statuses.get("vim-pending")?.replace(/\s+/g, " ").trim();
-    const parts = [mode, pending].filter((part): part is string => Boolean(part));
-    return parts.length > 0 ? parts.join(" ") : null;
+    return {
+      mode: statuses.get("vim-mode")?.replace(/\s+/g, " ").trim() || null,
+      pending: statuses.get("vim-pending")?.replace(/\s+/g, " ").trim() || null,
+    };
   }
 
   function renderLastPromptLines(width: number): string[] {
     if (bashModeActive || !showLastPrompt) return [];
 
     const vimStatus = getInlineVimStatus();
-    const vimPrefix = vimStatus ? ` ${getFgAnsiCode("sep")}${vimStatus}${ansi.reset} ` : "";
+    const vimPrefix = vimStatus.mode ? ` ${ansi.getFgAnsi(238, 238, 238)}${vimStatus.mode}${ansi.reset} ` : "";
+    const pendingSuffix = vimStatus.pending ? ` ${ansi.getFgAnsi(238, 238, 238)}${vimStatus.pending}${ansi.reset} ` : "";
 
-    if (!lastUserPrompt) return [vimPrefix ? truncateToWidth(vimPrefix, width, "…") : ""];
+    if (!lastUserPrompt) {
+      const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
+      return line ? [truncateToWidth(line, width, "…")] : [""];
+    }
 
     const promptPrefix = `${getFgAnsiCode("sep")}↳${ansi.reset} `;
-    const separator = vimPrefix ? `${getFgAnsiCode("sep")}|${ansi.reset} ` : "";
-    const prefix = `${vimPrefix}${separator}${promptPrefix}`;
-    const availableWidth = width - visibleWidth(prefix);
-    if (availableWidth < 10) return vimPrefix ? [truncateToWidth(vimPrefix, width, "…")] : [];
+    const prefix = `${vimPrefix}${promptPrefix}`;
+    const availableWidth = width - visibleWidth(prefix) - visibleWidth(pendingSuffix);
+    if (availableWidth < 10) {
+      const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
+      return line ? [truncateToWidth(line, width, "…")] : [];
+    }
 
     let promptText = lastUserPrompt.replace(/\s+/g, " ").trim();
-    if (!promptText) return vimPrefix ? [truncateToWidth(vimPrefix, width, "…")] : [];
+    if (!promptText) {
+      const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
+      return line ? [truncateToWidth(line, width, "…")] : [];
+    }
 
     promptText = truncateToWidth(promptText, availableWidth, "…");
 
     const styledPrompt = `${getFgAnsiCode("sep")}${promptText}${ansi.reset}`;
-    const line = `${prefix}${styledPrompt}`;
+    const left = `${prefix}${styledPrompt}`;
+    const gap = pendingSuffix ? " ".repeat(Math.max(1, width - visibleWidth(left) - visibleWidth(pendingSuffix))) : "";
+    const line = `${left}${gap}${pendingSuffix}`;
     return [truncateToWidth(line, width, "…")];
   }
 

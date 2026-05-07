@@ -25,8 +25,8 @@ export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   default: {
     // Vesper order: folder/path first, then git branch and thinking level.
     // Model/context/cache/cost are right-aligned like a status bar.
-    leftSegments: ["path", "git", "thinking", "shell_mode"],
-    rightSegments: ["model", "context_pct", "cache_read", "cost"],
+    leftSegments: ["path", "git", "shell_mode"],
+    rightSegments: ["model", "thinking", "context_pct", "cache_read", "cost"],
     secondarySegments: ["extension_statuses"],
     separator: "pipe",
     colors: DEFAULT_COLORS,

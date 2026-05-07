@@ -266,13 +266,12 @@ const costSegment: StatusLineSegment = {
   id: "cost",
   render(ctx) {
     const { cost } = ctx.usageStats;
-    const usingSubscription = ctx.usingSubscription;
 
-    if (!cost && !usingSubscription) {
+    if (!cost) {
       return { content: "", visible: false };
     }
 
-    const costDisplay = usingSubscription ? "(sub)" : `$${cost.toFixed(2)}`;
+    const costDisplay = `$${cost.toFixed(2)}`;
     return { content: color(ctx, "cost", costDisplay), visible: true };
   },
 };

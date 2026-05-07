@@ -1282,7 +1282,9 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     
     if (enabled && ctx.hasUI) {
       setupCustomEditor(ctx);
-      if (event.reason === "startup") {
+      // Startup welcome UI is disabled by default for this personal extension.
+      // Set `showWelcome: true` in pi settings to opt back in.
+      if (event.reason === "startup" && settings.showWelcome === true) {
         if (settings.quietStartup === true) {
           setupWelcomeHeader(ctx);
         } else {

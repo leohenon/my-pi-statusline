@@ -413,6 +413,7 @@ const extensionStatusesSegment: StatusLineSegment = {
     // Also skip statuses explicitly elevated into dedicated custom segments.
     const parts: string[] = [];
     for (const [statusKey, value] of statuses.entries()) {
+      if (statusKey === "vim-mode" || statusKey === "vim-pending") continue;
       if (ctx.hiddenExtensionStatusKeys.has(statusKey)) continue;
       const normalized = value ? normalizeCompactExtensionStatus(value) : null;
       if (normalized) {

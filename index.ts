@@ -2111,16 +2111,32 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     return lines.slice(-16);
   }
 
+  function getInlineVimStatus(): string | null {
+    const statuses = footerDataRef?.getExtensionStatuses();
+    if (!statuses) return null;
+
+    const mode = statuses.get("vim-mode")?.replace(/\s+/g, " ").trim();
+    const pending = statuses.get("vim-pending")?.replace(/\s+/g, " ").trim();
+    const parts = [mode, pending].filter((part): part is string => Boolean(part));
+    return parts.length > 0 ? parts.join(" ") : null;
+  }
+
   function renderLastPromptLines(width: number): string[] {
     if (bashModeActive || !showLastPrompt) return [];
-    if (!lastUserPrompt) return [""];
 
-    const prefix = ` ${getFgAnsiCode("sep")}↳${ansi.reset} `;
+    const vimStatus = getInlineVimStatus();
+    const vimPrefix = vimStatus ? ` ${getFgAnsiCode("sep")}${vimStatus}${ansi.reset} ` : "";
+
+    if (!lastUserPrompt) return [vimPrefix ? truncateToWidth(vimPrefix, width, "…") : ""];
+
+    const promptPrefix = `${getFgAnsiCode("sep")}↳${ansi.reset} `;
+    const separator = vimPrefix ? `${getFgAnsiCode("sep")}|${ansi.reset} ` : "";
+    const prefix = `${vimPrefix}${separator}${promptPrefix}`;
     const availableWidth = width - visibleWidth(prefix);
-    if (availableWidth < 10) return [];
+    if (availableWidth < 10) return vimPrefix ? [truncateToWidth(vimPrefix, width, "…")] : [];
 
     let promptText = lastUserPrompt.replace(/\s+/g, " ").trim();
-    if (!promptText) return [];
+    if (!promptText) return vimPrefix ? [truncateToWidth(vimPrefix, width, "…")] : [];
 
     promptText = truncateToWidth(promptText, availableWidth, "…");
 

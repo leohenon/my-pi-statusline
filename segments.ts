@@ -3,7 +3,7 @@ import { basename } from "node:path";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import type { BuiltinStatusLineSegmentId, RenderedSegment, SegmentContext, SemanticColor, StatusLineSegment, StatusLineSegmentId } from "./types.ts";
 import { normalizeCompactExtensionStatus, normalizeExtensionStatusValue } from "./powerline-config.ts";
-import { fg, rainbow, applyColor } from "./theme.ts";
+import { fg, applyColor } from "./theme.ts";
 import { getIcons, SEP_DOT, getThinkingText } from "./icons.ts";
 
 function color(ctx: SegmentContext, semantic: SemanticColor, text: string): string {
@@ -194,11 +194,11 @@ const thinkingSegment: StatusLineSegment = {
     const content = `think:${label}`;
 
     if (level === "high") {
-      return { content: color(ctx, "thinkingMedium", content), visible: true };
+      return { content: color(ctx, "thinkingHigh", content), visible: true };
     }
 
     if (level === "xhigh") {
-      return { content: rainbow(content), visible: true };
+      return { content: color(ctx, "thinkingXhigh", content), visible: true };
     }
 
     if (level === "minimal") {
@@ -362,7 +362,7 @@ const sessionSegment: StatusLineSegment = {
     const rawDisplay = ctx.sessionName?.trim() || ctx.lastUserPrompt?.replace(/\s+/g, " ").trim() || sessionId?.slice(0, 8) || "new";
     const display = truncateToWidth(rawDisplay, 72, "…");
 
-    return { content: color(ctx, "context", withIcon(icons.session, display)), visible: true };
+    return { content: color(ctx, "session", withIcon(icons.session, display)), visible: true };
   },
 };
 

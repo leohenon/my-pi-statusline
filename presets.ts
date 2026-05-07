@@ -23,16 +23,16 @@ const NERD_COLORS: ColorScheme = {
 
 export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   default: {
-    // Vesper order: folder/path first, then git branch and thinking level.
+    // Vesper order: git branch first, then full path and session context.
     // Model/context/cache/cost are right-aligned like a status bar.
-    leftSegments: ["path", "git", "session", "shell_mode"],
+    leftSegments: ["git", "path", "session", "shell_mode"],
     rightSegments: ["model", "thinking", "context_pct", "cache_read", "cost"],
     secondarySegments: ["extension_statuses"],
     separator: "pipe",
     colors: DEFAULT_COLORS,
     segmentOptions: {
       model: { showThinkingLevel: false },
-      path: { mode: "basename" },
+      path: { mode: "full" },
       git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
     },
   },

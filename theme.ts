@@ -20,29 +20,26 @@ export interface PowerlineThemeConfig {
 
 // Default color scheme (uses pi theme colors)
 const DEFAULT_COLORS: Required<ColorScheme> = {
-  model: "#d787af",  // Pink/mauve (matching original colors.ts)
-  shellMode: "accent",
-  path: "#00afaf",  // Teal/cyan (matching original colors.ts)
+  model: "accent",
+  shellMode: "success",
+  path: "text",
   gitDirty: "warning",
-  gitClean: "success",
-  thinking: "thinkingOff",
-  thinkingMinimal: "thinkingMinimal",
-  thinkingLow: "thinkingLow",
-  thinkingMedium: "thinkingMedium",
-  context: "dim",
+  gitClean: "muted",
+  thinking: "dim",
+  thinkingMinimal: "dim",
+  thinkingLow: "muted",
+  thinkingMedium: "accent",
+  thinkingHigh: "thinkingHigh",
+  thinkingXhigh: "thinkingXhigh",
+  context: "mdLink",
+  session: "muted",
   contextWarn: "warning",
   contextError: "error",
-  cost: "text",
+  cost: "muted",
   tokens: "muted",
   separator: "dim",
   border: "borderMuted",
 };
-
-// Rainbow colors for high thinking levels
-const RAINBOW_COLORS = [
-  "#b281d6", "#d787af", "#febc38", "#e4c00f", 
-  "#89d281", "#00afaf", "#178fb9", "#b281d6",
-];
 
 // Cache for user theme overrides
 let userThemeCache: ColorScheme | null = null;
@@ -200,23 +197,6 @@ export function fg(
 ): string {
   const color = resolveColor(semantic, presetColors);
   return applyColor(theme, color, text);
-}
-
-/**
- * Apply rainbow gradient to text (for high thinking levels)
- */
-export function rainbow(text: string): string {
-  let result = "";
-  let colorIndex = 0;
-  for (const char of text) {
-    if (char === " " || char === ":") {
-      result += char;
-    } else {
-      result += hexToAnsi(RAINBOW_COLORS[colorIndex % RAINBOW_COLORS.length]) + char;
-      colorIndex++;
-    }
-  }
-  return result + "\x1b[0m";
 }
 
 /**

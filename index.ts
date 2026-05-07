@@ -859,25 +859,54 @@ function renderSegmentWithWidth(
   return { content: rendered.content, width: visibleWidth(rendered.content), visible: true };
 }
 
-/** Build content string from pre-rendered parts */
-function buildContentFromParts(
-  parts: string[],
-  presetDef: ReturnType<typeof getPreset>,
-  width?: number,
-): string {
+function powerlineBarBackground(): string {
+  return ansi.getBgAnsi(22, 22, 22); // #161616, matching tmux status-style bg
+}
+
+function joinPowerlineParts(parts: string[], presetDef: ReturnType<typeof getPreset>, bg: string): string {
   if (parts.length === 0) return "";
   const separatorDef = getSeparator(presetDef.separator);
   const sepAnsi = getFgAnsiCode("sep");
   const sep = separatorDef.left;
 
-  // Subtle Vesper status-bar background. Segment renderers use ANSI resets for
-  // their foreground colors, so re-apply the background after each reset.
-  const bg = ansi.getBgAnsi(22, 22, 22); // #161616, matching tmux status-style bg
+  // Segment renderers use ANSI resets for their foreground colors, so re-apply
+  // the background after each reset.
   const keepBg = (text: string) => text.replaceAll(ansi.reset, `${ansi.reset}${bg}`);
-  const joined = parts.map(keepBg).join(` ${sepAnsi}${sep}${ansi.reset}${bg} `);
-  const content = ` ${joined} `;
-  const pad = typeof width === "number" ? Math.max(0, width - visibleWidth(content)) : 0;
-  return `${bg}${content}${" ".repeat(pad)}${ansi.reset}`;
+  return parts.map(keepBg).join(` ${sepAnsi}${sep}${ansi.reset}${bg} `);
+}
+
+/** Build a full-width status-bar string from left and right rendered parts. */
+function buildContentFromParts(
+  leftParts: string[],
+  presetDef: ReturnType<typeof getPreset>,
+  width?: number,
+  rightParts: string[] = [],
+): string {
+  if (leftParts.length === 0 && rightParts.length === 0) return "";
+
+  const bg = powerlineBarBackground();
+  const left = joinPowerlineParts(leftParts, presetDef, bg);
+  const right = joinPowerlineParts(rightParts, presetDef, bg);
+  const availableWidth = typeof width === "number" ? width : undefined;
+
+  if (!right) {
+    const content = ` ${left} `;
+    const pad = availableWidth ? Math.max(0, availableWidth - visibleWidth(content)) : 0;
+    return `${bg}${content}${" ".repeat(pad)}${ansi.reset}`;
+  }
+
+  if (!left) {
+    const rightContent = ` ${right} `;
+    const pad = availableWidth ? Math.max(0, availableWidth - visibleWidth(rightContent)) : 0;
+    return `${bg}${" ".repeat(pad)}${rightContent}${ansi.reset}`;
+  }
+
+  const leftContent = ` ${left}`;
+  const rightContent = `${right} `;
+  const gap = availableWidth
+    ? Math.max(1, availableWidth - visibleWidth(leftContent) - visibleWidth(rightContent))
+    : 1;
+  return `${bg}${leftContent}${" ".repeat(gap)}${rightContent}${ansi.reset}`;
 }
 
 /**
@@ -893,51 +922,53 @@ function computeResponsiveLayout(
   const separatorDef = getSeparator(presetDef.separator);
   const sepWidth = visibleWidth(separatorDef.left) + 2; // separator + spaces around it
   
-  // Get all segments: primary first, then secondary
   const mergedSegments = mergeSegmentsWithCustomItems(presetDef, config.customItems);
-  const primaryIds = [...mergedSegments.leftSegments, ...mergedSegments.rightSegments];
-  const secondaryIds = mergedSegments.secondarySegments;
-  const allSegmentIds = [...primaryIds, ...secondaryIds];
-  
-  // Render all segments and get their widths
-  const renderedSegments: { content: string; width: number }[] = [];
-  for (const segId of allSegmentIds) {
-    const { content, width, visible } = renderSegmentWithWidth(segId, ctx);
-    if (visible) {
-      renderedSegments.push({ content, width });
+
+  const renderIds = (ids: readonly StatusLineSegmentId[]) => {
+    const rendered: { content: string; width: number }[] = [];
+    for (const segId of ids) {
+      const { content, width, visible } = renderSegmentWithWidth(segId, ctx);
+      if (visible) {
+        rendered.push({ content, width });
+      }
     }
-  }
-  
-  if (renderedSegments.length === 0) {
+    return rendered;
+  };
+
+  const leftRendered = renderIds(mergedSegments.leftSegments);
+  const rightRendered = renderIds(mergedSegments.rightSegments);
+  const secondaryRendered = renderIds(mergedSegments.secondarySegments);
+
+  if (leftRendered.length === 0 && rightRendered.length === 0 && secondaryRendered.length === 0) {
     return { topContent: "", secondaryContent: "" };
   }
-  
-  // Calculate how many segments fit in top bar
-  // Account for: leading space (1) + trailing space (1) = 2 chars overhead
+
   const baseOverhead = 2;
+  const rightWidth = rightRendered.reduce((sum, seg, idx) => sum + seg.width + (idx > 0 ? sepWidth : 0), 0);
+  const reservedRightWidth = rightWidth > 0 ? rightWidth + 2 : 0;
+  const leftAvailableWidth = Math.max(0, availableWidth - reservedRightWidth - (rightWidth > 0 ? 1 : 0));
+
   let currentWidth = baseOverhead;
-  let topSegments: string[] = [];
-  let overflowSegments: { content: string; width: number }[] = [];
+  const topLeftSegments: string[] = [];
+  const overflowSegments: { content: string; width: number }[] = [];
   let overflow = false;
-  
-  for (const seg of renderedSegments) {
-    const neededWidth = seg.width + (topSegments.length > 0 ? sepWidth : 0);
-    
-    if (!overflow && currentWidth + neededWidth <= availableWidth) {
-      topSegments.push(seg.content);
+
+  for (const seg of leftRendered) {
+    const neededWidth = seg.width + (topLeftSegments.length > 0 ? sepWidth : 0);
+    if (!overflow && currentWidth + neededWidth <= leftAvailableWidth) {
+      topLeftSegments.push(seg.content);
       currentWidth += neededWidth;
     } else {
       overflow = true;
       overflowSegments.push(seg);
     }
   }
-  
-  // Fit overflow segments into secondary row (same width constraint)
-  // Stop at first non-fitting segment to preserve ordering
+
+  const topRightSegments = rightRendered.map((seg) => seg.content);
+
   let secondaryWidth = baseOverhead;
-  let secondarySegments: string[] = [];
-  
-  for (const seg of overflowSegments) {
+  const secondarySegments: string[] = [];
+  for (const seg of [...overflowSegments, ...secondaryRendered]) {
     const neededWidth = seg.width + (secondarySegments.length > 0 ? sepWidth : 0);
     if (secondaryWidth + neededWidth <= availableWidth) {
       secondarySegments.push(seg.content);
@@ -946,9 +977,9 @@ function computeResponsiveLayout(
       break;
     }
   }
-  
+
   return {
-    topContent: buildContentFromParts(topSegments, presetDef, availableWidth),
+    topContent: buildContentFromParts(topLeftSegments, presetDef, availableWidth, topRightSegments),
     secondaryContent: buildContentFromParts(secondarySegments, presetDef, availableWidth),
   };
 }

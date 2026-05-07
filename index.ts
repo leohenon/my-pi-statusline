@@ -2282,7 +2282,8 @@ export default function powerlineFooter(pi: ExtensionAPI) {
   }
 
   function renderLastPromptLines(width: number): string[] {
-    if (bashModeActive || !showLastPrompt || !lastUserPrompt) return [];
+    if (bashModeActive || !showLastPrompt) return [];
+    if (!lastUserPrompt) return [""];
 
     const prefix = ` ${getFgAnsiCode("sep")}↳${ansi.reset} `;
     const availableWidth = width - visibleWidth(prefix);

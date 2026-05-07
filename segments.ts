@@ -360,9 +360,9 @@ const sessionSegment: StatusLineSegment = {
     const icons = getIcons();
     const sessionId = ctx.sessionId;
     const rawDisplay = ctx.sessionName?.trim() || ctx.lastUserPrompt?.replace(/\s+/g, " ").trim() || sessionId?.slice(0, 8) || "new";
-    const display = truncateToWidth(rawDisplay, 48, "…");
+    const display = truncateToWidth(rawDisplay, 72, "…");
 
-    return { content: color(ctx, "tokens", withIcon(icons.session, display)), visible: true };
+    return { content: color(ctx, "context", withIcon(icons.session, display)), visible: true };
   },
 };
 

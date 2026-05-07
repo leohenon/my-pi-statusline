@@ -248,13 +248,10 @@ const contextPctSegment: StatusLineSegment = {
     const pct = ctx.contextPercent;
     const text = `${pct.toFixed(1)}%`;
 
-    if (pct > 90) {
+    if (pct > 20) {
       return { content: color(ctx, "contextError", text), visible: true };
     }
-    if (pct > 70) {
-      return { content: color(ctx, "contextWarn", text), visible: true };
-    }
-    return { content: color(ctx, "context", text), visible: true };
+    return { content: applyColor(ctx.theme, "success", text), visible: true };
   },
 };
 

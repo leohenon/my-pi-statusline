@@ -24,7 +24,7 @@ const DEFAULT_COLORS: Required<ColorScheme> = {
   shellMode: "success",
   path: "text",
   gitDirty: "warning",
-  gitClean: "muted",
+  gitClean: "text",
   thinking: "dim",
   thinkingMinimal: "dim",
   thinkingLow: "muted",

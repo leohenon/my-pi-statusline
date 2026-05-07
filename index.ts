@@ -856,7 +856,7 @@ function joinPowerlineParts(parts: string[], presetDef: ReturnType<typeof getPre
   // Segment renderers use ANSI resets for their foreground colors, so re-apply
   // the background after each reset.
   const keepBg = (text: string) => text.replaceAll(ansi.reset, `${ansi.reset}${bg}`);
-  return parts.map(keepBg).join(` ${sepAnsi}${sep}${ansi.reset}${bg} `);
+  return parts.map(keepBg).join(`${sepAnsi}${sep}${ansi.reset}${bg}`);
 }
 
 /** Build a full-width status-bar string from left and right rendered parts. */
@@ -874,18 +874,18 @@ function buildContentFromParts(
   const availableWidth = typeof width === "number" ? width : undefined;
 
   if (!right) {
-    const content = ` ${left} `;
+    const content = `${left} `;
     const pad = availableWidth ? Math.max(0, availableWidth - visibleWidth(content)) : 0;
     return `${bg}${content}${" ".repeat(pad)}${ansi.reset}`;
   }
 
   if (!left) {
-    const rightContent = ` ${right} `;
+    const rightContent = `${right} `;
     const pad = availableWidth ? Math.max(0, availableWidth - visibleWidth(rightContent)) : 0;
     return `${bg}${" ".repeat(pad)}${rightContent}${ansi.reset}`;
   }
 
-  const leftContent = ` ${left}`;
+  const leftContent = `${left}`;
   const rightContent = `${right} `;
   const gap = availableWidth
     ? Math.max(1, availableWidth - visibleWidth(leftContent) - visibleWidth(rightContent))
@@ -909,11 +909,11 @@ function computeResponsiveLayout(
   const mergedSegments = mergeSegmentsWithCustomItems(presetDef, config.customItems);
 
   const renderIds = (ids: readonly StatusLineSegmentId[]) => {
-    const rendered: { content: string; width: number }[] = [];
+    const rendered: { id: StatusLineSegmentId; content: string; width: number }[] = [];
     for (const segId of ids) {
       const { content, width, visible } = renderSegmentWithWidth(segId, ctx);
       if (visible) {
-        rendered.push({ content, width });
+        rendered.push({ id: segId, content, width });
       }
     }
     return rendered;
@@ -934,7 +934,7 @@ function computeResponsiveLayout(
 
   let currentWidth = baseOverhead;
   const topLeftSegments: string[] = [];
-  const overflowSegments: { content: string; width: number }[] = [];
+  const overflowSegments: { id: StatusLineSegmentId; content: string; width: number }[] = [];
   let overflow = false;
 
   for (const seg of leftRendered) {
@@ -942,7 +942,7 @@ function computeResponsiveLayout(
     if (!overflow && currentWidth + neededWidth <= leftAvailableWidth) {
       topLeftSegments.push(seg.content);
       currentWidth += neededWidth;
-    } else {
+    } else if (seg.id !== "session") {
       overflow = true;
       overflowSegments.push(seg);
     }
@@ -2126,31 +2126,37 @@ export default function powerlineFooter(pi: ExtensionAPI) {
 
     const vimStatus = getInlineVimStatus();
     const vimPrefix = vimStatus.mode ? ` ${ansi.getFgAnsi(238, 238, 238)}${vimStatus.mode}${ansi.reset} ` : "";
-    const pendingSuffix = vimStatus.pending ? ` ${ansi.getFgAnsi(238, 238, 238)}${vimStatus.pending}${ansi.reset} ` : "";
+    let pendingSuffix = vimStatus.pending ? ` ${getFgAnsiCode("muted")}${vimStatus.pending}${ansi.reset} ` : "";
 
-    if (!lastUserPrompt) {
+    const fitPendingOnlyLine = () => {
+      if (pendingSuffix && visibleWidth(vimPrefix) + visibleWidth(pendingSuffix) > width) {
+        pendingSuffix = "";
+      }
       const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
       return line ? [truncateToWidth(line, width, "…")] : [""];
-    }
+    };
+
+    if (!lastUserPrompt) return fitPendingOnlyLine();
 
     const promptPrefix = `${getFgAnsiCode("sep")}↳${ansi.reset} `;
     const prefix = `${vimPrefix}${promptPrefix}`;
-    const availableWidth = width - visibleWidth(prefix) - visibleWidth(pendingSuffix);
-    if (availableWidth < 10) {
-      const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
-      return line ? [truncateToWidth(line, width, "…")] : [];
+    let availableWidth = width - visibleWidth(prefix) - visibleWidth(pendingSuffix);
+    if (pendingSuffix && availableWidth < 10) {
+      pendingSuffix = "";
+      availableWidth = width - visibleWidth(prefix);
     }
+    if (availableWidth < 10) return fitPendingOnlyLine();
 
     let promptText = lastUserPrompt.replace(/\s+/g, " ").trim();
-    if (!promptText) {
-      const line = `${vimPrefix}${pendingSuffix ? " ".repeat(Math.max(0, width - visibleWidth(vimPrefix) - visibleWidth(pendingSuffix))) + pendingSuffix : ""}`;
-      return line ? [truncateToWidth(line, width, "…")] : [];
-    }
+    if (!promptText) return fitPendingOnlyLine();
 
     promptText = truncateToWidth(promptText, availableWidth, "…");
 
     const styledPrompt = `${getFgAnsiCode("sep")}${promptText}${ansi.reset}`;
     const left = `${prefix}${styledPrompt}`;
+    if (pendingSuffix && visibleWidth(left) + 1 + visibleWidth(pendingSuffix) > width) {
+      pendingSuffix = "";
+    }
     const gap = pendingSuffix ? " ".repeat(Math.max(1, width - visibleWidth(left) - visibleWidth(pendingSuffix))) : "";
     const line = `${left}${gap}${pendingSuffix}`;
     return [truncateToWidth(line, width, "…")];

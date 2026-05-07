@@ -52,8 +52,8 @@ export function getThinkingText(level: string): string | undefined {
 // Nerd Font icons (matching oh-my-pi exactly)
 export const NERD_ICONS: IconSet = {
   pi: "\uE22C",         // nf-oct-pi (stylized pi icon)
-  model: "\uEC19",      // nf-md-chip (model/AI chip)
-  folder: "\uF115",     // nf-fa-folder_open
+  model: "",
+  folder: "",
   branch: "\uF126",     // nf-fa-code_fork (git branch)
   git: "\uF1D3",        // nf-fa-git (git logo)
   tokens: "\uE26B",     // nf-seti-html (tokens symbol)
@@ -61,11 +61,11 @@ export const NERD_ICONS: IconSet = {
   cost: "\uF155",       // nf-fa-dollar
   time: "\uF017",       // nf-fa-clock_o
   agents: "\uF0C0",     // nf-fa-users
-  cache: "\uF1C0",      // nf-fa-database (cache)
+  cache: "",
   input: "\uF090",      // nf-fa-sign_in (input arrow)
   output: "\uF08B",     // nf-fa-sign_out (output arrow)
   host: "\uF109",       // nf-fa-laptop (host)
-  session: "\uF550",    // nf-md-identifier (session id)
+  session: "",
   auto: "\u{F0068}",    // nf-md-lightning_bolt (auto-compact)
   warning: "\uF071",    // nf-fa-warning
 };
@@ -74,7 +74,7 @@ export const NERD_ICONS: IconSet = {
 export const ASCII_ICONS: IconSet = {
   pi: "π",
   model: "",
-  folder: "dir",
+  folder: "",
   branch: "⎇",
   git: "⎇",
   tokens: "⊛",
@@ -82,11 +82,11 @@ export const ASCII_ICONS: IconSet = {
   cost: "$",
   time: "◷",
   agents: "AG",
-  cache: "cache",
+  cache: "",
   input: "in:",
   output: "out:",
   host: "host",
-  session: "id",
+  session: "",
   auto: "AC",
   warning: "!",
 };

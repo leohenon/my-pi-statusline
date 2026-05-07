@@ -130,50 +130,14 @@ const gitSegment: StatusLineSegment = {
   render(ctx) {
     const icons = getIcons();
     const opts = ctx.options.git ?? {};
-    const { branch, staged, unstaged, untracked } = ctx.git;
-    const gitStatus = (staged > 0 || unstaged > 0 || untracked > 0) 
-      ? { staged, unstaged, untracked } 
-      : null;
+    const { branch } = ctx.git;
 
-    if (!branch && !gitStatus) return { content: "", visible: false };
+    if (!branch || opts.showBranch === false) return { content: "", visible: false };
 
-    const isDirty = gitStatus && (gitStatus.staged > 0 || gitStatus.unstaged > 0 || gitStatus.untracked > 0);
-    const showBranch = opts.showBranch !== false;
-    const branchColor: SemanticColor = isDirty ? "gitDirty" : "gitClean";
-
-    // Build content - color branch separately from indicators
-    let content = "";
-    if (showBranch && branch) {
-      // Color just the branch name (icon + branch text)
-      content = color(ctx, branchColor, withIcon(icons.branch, branch));
-    }
-
-    // Add status indicators (each with their own color, not wrapped)
-    if (gitStatus) {
-      const indicators: string[] = [];
-      if (opts.showUnstaged !== false && gitStatus.unstaged > 0) {
-        indicators.push(applyColor(ctx.theme, "warning", `*${gitStatus.unstaged}`));
-      }
-      if (opts.showStaged !== false && gitStatus.staged > 0) {
-        indicators.push(applyColor(ctx.theme, "success", `+${gitStatus.staged}`));
-      }
-      if (opts.showUntracked !== false && gitStatus.untracked > 0) {
-        indicators.push(applyColor(ctx.theme, "muted", `?${gitStatus.untracked}`));
-      }
-      if (indicators.length > 0) {
-        const indicatorText = indicators.join(" ");
-        if (!content && showBranch === false) {
-          // No branch shown, color the git icon with branch color
-          content = color(ctx, branchColor, icons.git ? `${icons.git} ` : "") + indicatorText;
-        } else {
-          content += content ? ` ${indicatorText}` : indicatorText;
-        }
-      }
-    }
-
-    if (!content) return { content: "", visible: false };
-
-    return { content, visible: true };
+    return {
+      content: color(ctx, "gitClean", withIcon(icons.branch, branch)),
+      visible: true,
+    };
   },
 };
 
@@ -191,7 +155,7 @@ const thinkingSegment: StatusLineSegment = {
       xhigh: "xhigh",
     };
     const label = levelText[level] || level;
-    const content = `think:${label}`;
+    const content = label;
 
     if (level === "high") {
       return { content: color(ctx, "thinkingHigh", content), visible: true };
@@ -281,24 +245,16 @@ const contextPctSegment: StatusLineSegment = {
   render(ctx) {
     if (ctx.customCompactionEnabled) return { content: "", visible: false };
 
-    const icons = getIcons();
     const pct = ctx.contextPercent;
-    const window = ctx.contextWindow;
+    const text = `${pct.toFixed(1)}%`;
 
-    const autoIcon = ctx.autoCompactEnabled && icons.auto ? ` ${icons.auto}` : "";
-    const text = `${pct.toFixed(1)}%/${formatTokens(window)}${autoIcon}`;
-
-    // Icon outside color, text inside - use semantic colors for thresholds
-    let content: string;
     if (pct > 90) {
-      content = withIcon(icons.context, color(ctx, "contextError", text));
-    } else if (pct > 70) {
-      content = withIcon(icons.context, color(ctx, "contextWarn", text));
-    } else {
-      content = withIcon(icons.context, color(ctx, "context", text));
+      return { content: color(ctx, "contextError", text), visible: true };
     }
-
-    return { content, visible: true };
+    if (pct > 70) {
+      return { content: color(ctx, "contextWarn", text), visible: true };
+    }
+    return { content: color(ctx, "context", text), visible: true };
   },
 };
 
@@ -378,13 +334,10 @@ const hostnameSegment: StatusLineSegment = {
 const cacheReadSegment: StatusLineSegment = {
   id: "cache_read",
   render(ctx) {
-    const icons = getIcons();
     const { cacheRead } = ctx.usageStats;
     if (!cacheRead) return { content: "", visible: false };
 
-    const parts = [icons.cache, icons.input, formatTokens(cacheRead)].filter(Boolean);
-    const content = parts.join(" ");
-    return { content: color(ctx, "tokens", content), visible: true };
+    return { content: color(ctx, "tokens", formatTokens(cacheRead)), visible: true };
   },
 };
 

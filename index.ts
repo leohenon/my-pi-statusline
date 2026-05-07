@@ -2450,7 +2450,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       render(width: number): string[] {
         return renderPowerlineStatusLines(width);
       },
-    }), { placement: "aboveEditor" });
+    }), { placement: "belowEditor" });
 
     ctx.ui.setWidget("powerline-top", (_tui: any, theme: Theme) => ({
       dispose() {},
@@ -2460,7 +2460,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       render(width: number): string[] {
         return renderPowerlineTopLines(width, theme);
       },
-    }), { placement: "aboveEditor" });
+    }), { placement: "belowEditor" });
 
     ctx.ui.setWidget("powerline-secondary", (_tui: any, theme: Theme) => ({
       dispose() {},

@@ -862,7 +862,8 @@ function renderSegmentWithWidth(
 /** Build content string from pre-rendered parts */
 function buildContentFromParts(
   parts: string[],
-  presetDef: ReturnType<typeof getPreset>
+  presetDef: ReturnType<typeof getPreset>,
+  width?: number,
 ): string {
   if (parts.length === 0) return "";
   const separatorDef = getSeparator(presetDef.separator);
@@ -874,7 +875,9 @@ function buildContentFromParts(
   const bg = ansi.getBgAnsi(22, 22, 22); // #161616, matching tmux status-style bg
   const keepBg = (text: string) => text.replaceAll(ansi.reset, `${ansi.reset}${bg}`);
   const joined = parts.map(keepBg).join(` ${sepAnsi}${sep}${ansi.reset}${bg} `);
-  return `${bg} ${joined} ${ansi.reset}`;
+  const content = ` ${joined} `;
+  const pad = typeof width === "number" ? Math.max(0, width - visibleWidth(content)) : 0;
+  return `${bg}${content}${" ".repeat(pad)}${ansi.reset}`;
 }
 
 /**
@@ -945,8 +948,8 @@ function computeResponsiveLayout(
   }
   
   return {
-    topContent: buildContentFromParts(topSegments, presetDef),
-    secondaryContent: buildContentFromParts(secondarySegments, presetDef),
+    topContent: buildContentFromParts(topSegments, presetDef, availableWidth),
+    secondaryContent: buildContentFromParts(secondarySegments, presetDef, availableWidth),
   };
 }
 

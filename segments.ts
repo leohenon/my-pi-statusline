@@ -1,6 +1,6 @@
 import { hostname as osHostname } from "node:os";
 import { basename } from "node:path";
-import { visibleWidth } from "@mariozechner/pi-tui";
+import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import type { BuiltinStatusLineSegmentId, RenderedSegment, SegmentContext, SemanticColor, StatusLineSegment, StatusLineSegmentId } from "./types.ts";
 import { normalizeCompactExtensionStatus, normalizeExtensionStatusValue } from "./powerline-config.ts";
 import { fg, rainbow, applyColor } from "./theme.ts";
@@ -359,7 +359,8 @@ const sessionSegment: StatusLineSegment = {
   render(ctx) {
     const icons = getIcons();
     const sessionId = ctx.sessionId;
-    const display = ctx.sessionName?.trim() || sessionId?.slice(0, 8) || "new";
+    const rawDisplay = ctx.sessionName?.trim() || ctx.lastUserPrompt?.replace(/\s+/g, " ").trim() || sessionId?.slice(0, 8) || "new";
+    const display = truncateToWidth(rawDisplay, 48, "…");
 
     return { content: color(ctx, "tokens", withIcon(icons.session, display)), visible: true };
   },

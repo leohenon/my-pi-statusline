@@ -2156,6 +2156,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       thinkingLevel,
       sessionId: ctx.sessionManager?.getSessionId?.(),
       sessionName: ctx.sessionManager?.getSessionName?.(),
+      lastUserPrompt,
       usageStats: { input, output, cacheRead, cacheWrite, cost },
       contextPercent,
       contextWindow,
@@ -2281,7 +2282,10 @@ export default function powerlineFooter(pi: ExtensionAPI) {
   }
 
   function renderLastPromptLines(width: number): string[] {
-    if (bashModeActive || !showLastPrompt || !lastUserPrompt) return [];
+    // The current prompt/thread title is rendered inside the powerline session
+    // segment. Keep this empty so it does not appear as a separate row below
+    // the status bar.
+    return [];
 
     const prefix = ` ${getFgAnsiCode("sep")}↳${ansi.reset} `;
     const availableWidth = width - visibleWidth(prefix);

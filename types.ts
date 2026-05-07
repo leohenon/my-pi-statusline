@@ -144,6 +144,7 @@ export interface SegmentContext {
   thinkingLevel: string;
   sessionId: string | undefined;
   sessionName: string | undefined;
+  lastUserPrompt: string | undefined;
   
   // Computed
   usageStats: UsageStats;

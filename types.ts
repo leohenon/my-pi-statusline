@@ -143,6 +143,7 @@ export interface SegmentContext {
   model: { id: string; name?: string; reasoning?: boolean; contextWindow?: number } | undefined;
   thinkingLevel: string;
   sessionId: string | undefined;
+  sessionName: string | undefined;
   
   // Computed
   usageStats: UsageStats;

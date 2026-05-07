@@ -88,6 +88,12 @@ export function renderFixedEditorCluster(input: FixedEditorClusterInput): FixedE
   const editorLines = capEditorLines(editorSource, maxRows);
   let remaining = maxRows - editorLines.length;
 
+  // Keep the prompt/editor visually first in the fixed cluster, then render the
+  // powerline/status rows below it. Widget placement alone is not enough in
+  // fixed-editor mode because this compositor decides final row ordering.
+  const status = takeTail(statusLines, remaining);
+  remaining -= status.length;
+
   const top = takeTail(topLines, remaining);
   remaining -= top.length;
 
@@ -97,15 +103,12 @@ export function renderFixedEditorCluster(input: FixedEditorClusterInput): FixedE
   const lastPrompt = takeTail(lastPromptLines, remaining);
   remaining -= lastPrompt.length;
 
-  const status = takeTail(statusLines, remaining);
-  remaining -= status.length;
-
   const transcript = takeTail(transcriptLines, remaining);
 
   return extractCursor([
+    ...editorLines,
     ...status,
     ...top,
-    ...editorLines,
     ...secondary,
     ...transcript,
     ...lastPrompt,

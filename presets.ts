@@ -23,7 +23,9 @@ const NERD_COLORS: ColorScheme = {
 
 export const PRESETS: Record<StatusLinePreset, PresetDef> = {
   default: {
-    leftSegments: ["model", "thinking", "shell_mode", "path", "git", "context_pct", "cache_read", "cost"],
+    // Vesper order: folder/path first, then git branch, model, thinking level,
+    // followed by usage/cost details.
+    leftSegments: ["path", "git", "model", "thinking", "shell_mode", "context_pct", "cache_read", "cost"],
     rightSegments: [],
     secondarySegments: ["extension_statuses"],
     separator: "powerline-thin",

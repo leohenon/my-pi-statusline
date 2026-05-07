@@ -961,6 +961,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
   let footerDataRef: ReadonlyFooterDataProvider | null = null;
   let getThinkingLevelFn: (() => string) | null = null;
   let currentThinkingLevel: string | null = null;
+  let lastRenderedThinkingLevel: string | null = null;
   let liveAssistantUsage: SessionAssistantUsage | null = null;
   let isStreaming = false;
   let tuiRef: any = null;
@@ -1226,7 +1227,11 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     getThinkingLevelFn = typeof ctx.getThinkingLevel === "function"
       ? () => ctx.getThinkingLevel()
       : null;
-    currentThinkingLevel = getThinkingLevelFn?.() ?? null;
+    // Do not cache the startup value here. Pi currently does not expose a
+    // first-class extension event for every thinking-level change, so the
+    // footer must consult ctx.getThinkingLevel() during renders.
+    currentThinkingLevel = null;
+    lastRenderedThinkingLevel = null;
 
     if (ctx.hasUI) {
       ctx.ui.setStatus("stash", undefined);
@@ -1270,6 +1275,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     footerDataRef = null;
     getThinkingLevelFn = null;
     currentThinkingLevel = null;
+    lastRenderedThinkingLevel = null;
     liveAssistantUsage = null;
     tuiRef = null;
     currentEditor = null;
@@ -2103,7 +2109,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       ? ctx.modelRegistry?.isUsingOAuth?.(ctx.model) ?? false
       : false;
 
-    const thinkingLevel = currentThinkingLevel ?? thinkingLevelFromSession ?? getThinkingLevelFn?.() ?? "off";
+    const thinkingLevel = getThinkingLevelFn?.() ?? currentThinkingLevel ?? thinkingLevelFromSession ?? "off";
 
     return {
       model: ctx.model,
@@ -2139,6 +2145,12 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     const cacheTtl = isStreaming ? STREAMING_LAYOUT_CACHE_TTL_MS : LAYOUT_CACHE_TTL_MS;
 
     if (lastLayoutResult && lastLayoutWidth === width) {
+      const latestThinkingLevel = getThinkingLevelFn?.() ?? currentThinkingLevel ?? null;
+      if (latestThinkingLevel !== lastRenderedThinkingLevel) {
+        layoutDirty = true;
+        forceNextLayoutRecompute = true;
+      }
+
       const msSinceInput = now - lastEditorInputAt;
       const typingRecently = msSinceInput < EDITOR_STATUS_DEFER_MS;
 
@@ -2156,6 +2168,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     
     lastLayoutWidth = width;
     lastLayoutResult = computeResponsiveLayout(segmentCtx, presetDef, width);
+    lastRenderedThinkingLevel = segmentCtx.thinkingLevel;
     lastLayoutTimestamp = now;
     layoutDirty = false;
     forceNextLayoutRecompute = false;

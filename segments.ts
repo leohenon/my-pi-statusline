@@ -321,7 +321,7 @@ const sessionSegment: StatusLineSegment = {
       ? `${truncateToWidth(rawDisplay, maxWidth - 1, "")}${applyColor(ctx.theme, "muted", "…")}`
       : rawDisplay;
     const stashStatus = ctx.options.session?.showStash === false ? "" : normalizeExtensionStatusValue(ctx.extensionStatuses.get("stash") ?? "");
-    const stashSuffix = stashStatus ? ` | ${color(ctx, "thinkingMedium", stashStatus)}` : "";
+    const stashSuffix = stashStatus ? `${color(ctx, "session", " | ")}${color(ctx, "model", stashStatus)}` : "";
 
     return { content: `${color(ctx, "session", withIcon(icons.session, display))}${stashSuffix}`, visible: true };
   },

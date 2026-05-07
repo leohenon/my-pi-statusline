@@ -85,6 +85,7 @@ export interface StatusLineSegmentOptions {
     maxLength?: number;
   };
   git?: { showBranch?: boolean; showStaged?: boolean; showUnstaged?: boolean; showUntracked?: boolean };
+  session?: { maxWidth?: number; showStash?: boolean };
   time?: { format?: "12h" | "24h"; showSeconds?: boolean };
 }
 

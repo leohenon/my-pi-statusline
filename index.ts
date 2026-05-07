@@ -938,15 +938,31 @@ function computeResponsiveLayout(
   let overflow = false;
 
   for (const seg of leftRendered) {
-    const neededWidth = seg.width + (topLeftSegments.length > 0 ? sepWidth : 0);
+    const separatorWidth = topLeftSegments.length > 0 ? sepWidth : 0;
+    const neededWidth = seg.width + separatorWidth;
     if (!overflow && currentWidth + neededWidth <= leftAvailableWidth) {
       topLeftSegments.push(seg.content);
       currentWidth += neededWidth;
+    } else if (!overflow && seg.id === "session") {
+      const remainingWidth = leftAvailableWidth - currentWidth - separatorWidth;
+      if (remainingWidth > 16) {
+        const sessionCtx: SegmentContext = {
+          ...ctx,
+          options: {
+            ...ctx.options,
+            session: { ...ctx.options.session, maxWidth: remainingWidth, showStash: false },
+          },
+        };
+        const truncated = renderSegmentWithWidth(seg.id, sessionCtx);
+        if (truncated.visible && truncated.width <= remainingWidth) {
+          topLeftSegments.push(truncated.content);
+          currentWidth += truncated.width + separatorWidth;
+        }
+      }
+      overflow = true;
     } else {
       overflow = true;
-      if (seg.id !== "session") {
-        overflowSegments.push(seg);
-      }
+      overflowSegments.push(seg);
     }
   }
 

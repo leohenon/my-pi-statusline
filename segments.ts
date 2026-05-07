@@ -316,11 +316,11 @@ const sessionSegment: StatusLineSegment = {
     const icons = getIcons();
     const sessionId = ctx.sessionId;
     const rawDisplay = ctx.sessionName?.trim() || ctx.lastUserPrompt?.replace(/\s+/g, " ").trim() || sessionId?.slice(0, 8) || "new";
-    const maxWidth = 72;
+    const maxWidth = Math.max(1, ctx.options.session?.maxWidth ?? 72);
     const display = visibleWidth(rawDisplay) > maxWidth
       ? `${truncateToWidth(rawDisplay, maxWidth - 1, "")}${applyColor(ctx.theme, "muted", "…")}`
       : rawDisplay;
-    const stashStatus = normalizeExtensionStatusValue(ctx.extensionStatuses.get("stash") ?? "");
+    const stashStatus = ctx.options.session?.showStash === false ? "" : normalizeExtensionStatusValue(ctx.extensionStatuses.get("stash") ?? "");
     const stashSuffix = stashStatus ? ` | ${color(ctx, "thinkingMedium", stashStatus)}` : "";
 
     return { content: `${color(ctx, "session", withIcon(icons.session, display))}${stashSuffix}`, visible: true };

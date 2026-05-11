@@ -18,6 +18,7 @@ export interface IconSet {
   session: string;
   auto: string;
   warning: string;
+  telegram: string;
 }
 
 // Separator characters
@@ -68,6 +69,7 @@ export const NERD_ICONS: IconSet = {
   session: "",
   auto: "\u{F0068}",    // nf-md-lightning_bolt (auto-compact)
   warning: "\uF071",    // nf-fa-warning
+  telegram: "\uF2C6",   // nf-fa-telegram
 };
 
 // ASCII/Unicode fallback icons (matching oh-my-pi)
@@ -89,6 +91,7 @@ export const ASCII_ICONS: IconSet = {
   session: "",
   auto: "AC",
   warning: "!",
+  telegram: "tlgrm",
 };
 
 type PartialIconSet = Partial<IconSet>;

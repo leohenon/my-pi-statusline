@@ -1,5 +1,6 @@
 import { hostname as osHostname } from "node:os";
-import { basename } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, basename } from "node:path";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import type { BuiltinStatusLineSegmentId, RenderedSegment, SegmentContext, SemanticColor, StatusLineSegment, StatusLineSegmentId } from "./types.ts";
 import { normalizeCompactExtensionStatus, normalizeExtensionStatusValue } from "./powerline-config.ts";
@@ -8,6 +9,40 @@ import { getIcons, SEP_DOT, getThinkingText } from "./icons.ts";
 
 function color(ctx: SegmentContext, semantic: SemanticColor, text: string): string {
   return fg(ctx.theme, semantic, text, ctx.colors);
+}
+
+function getTelegramConfigPath(): string {
+  const home = process.env.HOME || process.env.USERPROFILE;
+  return home ? join(home, ".pi", "agent", "telegram.json") : "";
+}
+
+function hasTelegramConfig(): boolean {
+  const configPath = getTelegramConfigPath();
+  if (!configPath || !existsSync(configPath)) return false;
+
+  try {
+    const parsed = JSON.parse(readFileSync(configPath, "utf-8"));
+    return typeof parsed?.botToken === "string"
+      && /^\d+:[A-Za-z0-9_-]+$/.test(parsed.botToken)
+      && (typeof parsed?.allowedUserId === "number" || typeof parsed?.allowedUserId === "string");
+  } catch {
+    return false;
+  }
+}
+
+function getConnectedTelegramStatus(statuses: ReadonlyMap<string, string>): boolean | null {
+  const telegramKeys = ["telegram", "telegram-bridge", "telegram_bridge"];
+  for (const key of telegramKeys) {
+    const value = statuses.get(key);
+    if (!value) continue;
+
+    const normalized = normalizeExtensionStatusValue(value).toLowerCase();
+    if (!normalized) continue;
+    if (/disconnect|offline|disabled|error|failed|not connected/.test(normalized)) return false;
+    return true;
+  }
+
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -333,6 +368,16 @@ const hostnameSegment: StatusLineSegment = {
   },
 };
 
+const telegramSegment: StatusLineSegment = {
+  id: "telegram",
+  render(ctx) {
+    const connected = getConnectedTelegramStatus(ctx.extensionStatuses) ?? hasTelegramConfig();
+    if (!connected) return { content: "", visible: false };
+
+    return { content: applyColor(ctx.theme, "success", getIcons().telegram), visible: true };
+  },
+};
+
 const cacheReadSegment: StatusLineSegment = {
   id: "cache_read",
   render(ctx) {
@@ -405,6 +450,7 @@ export const SEGMENTS: Record<BuiltinStatusLineSegmentId, StatusLineSegment> = {
   time: timeSegment,
   session: sessionSegment,
   hostname: hostnameSegment,
+  telegram: telegramSegment,
   cache_read: cacheReadSegment,
   cache_write: cacheWriteSegment,
   extension_statuses: extensionStatusesSegment,

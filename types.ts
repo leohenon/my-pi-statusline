@@ -46,6 +46,7 @@ export type BuiltinStatusLineSegmentId =
   | "time"
   | "session"
   | "hostname"
+  | "telegram"
   | "cache_read"
   | "cache_write"
   | "thinking"

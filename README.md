@@ -1,6 +1,6 @@
 # my-pi-statusline
 
-Personal Pi statusline extension for my setup. Based from `pi-powerline-footer`.
+Personal Pi statusline extension for my setup. Built on [`pi-powerline-footer`](https://github.com/nicobailon/pi-powerline-footer).
 
 ![my-pi-statusline](./statusline.png)
 
